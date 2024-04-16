@@ -217,4 +217,4 @@ THINGS TO KEEP IN MIND
 5. Launching multiple instances of the crawler will download the same urls in
    both. Mechanisms can be used to avoid that, however the politeness limits
    still apply and will be checked.
-6. Do not attempt to download the links directly from ics servers.
+6. Do not attempt to download the links directly from ics servers. 
