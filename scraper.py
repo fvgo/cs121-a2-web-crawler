@@ -1,6 +1,49 @@
 import re
 from urllib.parse import urlparse
 
+# taken from the read me :
+
+def scraper (url: str, resp: utils.response.Response) -> list:
+    """
+    (This is the meat of the crawler) Implement the scraper function in scraper.py. 
+    
+    The scraper function receives a URL and corresponding Web response (for example, the 
+    first one will be "http://www.ics.uci.edu" and the Web response will contain the page 
+    itself). Your task is to parse the Web response, extract enough information from the 
+    page (if it's a valid page) so as to be able to answer the questions for the report, 
+    and finally, return the list of URLs "scrapped" from that page. 
+    
+    Some important notes:
+    - Make sure to return only URLs that are within the domains and paths mentioned above! 
+    (see is_valid function in scraper.py -- you need to change it)
+
+    - Make sure to defragment the URLs, i.e. remove the fragment part.
+
+    - You can use whatever libraries make your life easier to parse things. Optional dependencies 
+    you might want to look at: BeautifulSoup, lxml (nudge, nudge, wink, wink!)
+        https://beautiful-soup-4.readthedocs.io/en/latest/
+        https://lxml.de/
+
+
+    Optionally, in the scraper function, you can also save the URL and the web page on 
+    your local disk.
+
+    @param url: the URL that was added to the frontier, and downloaded from the cache.
+    It is of type str and was an url that was previously added to the
+    frontier.
+
+    @param resp: the response given by the caching server for the requested URL.
+    The response is an object of type Response (see utils/response.py)
+    """
+    pass
+    # NOTE: same function as below?? but readme.md was more specific with the
+    # return type and parameter requirements
+
+    
+
+
+######
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
@@ -15,6 +58,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+
     return list()
 
 def is_valid(url):
