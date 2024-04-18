@@ -1,6 +1,10 @@
 import re
 from urllib.parse import urlparse
 
+# new imports for attempt at extract_next_links implementation
+from bs4 import BeautifulSoup
+from urlparse import urldefrag
+
 # taken from the read me :
 
 def scraper (url: str, resp: utils.response.Response) -> list:
@@ -22,6 +26,7 @@ def scraper (url: str, resp: utils.response.Response) -> list:
     - You can use whatever libraries make your life easier to parse things. Optional dependencies 
     you might want to look at: BeautifulSoup, lxml (nudge, nudge, wink, wink!)
         https://beautiful-soup-4.readthedocs.io/en/latest/
+        https://realpython.com/beautiful-soup-web-scraper-python/
         https://lxml.de/
 
 
@@ -58,6 +63,79 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+
+    # VVVV attempt at using beautifulsoup [has not been tested]
+
+    hyperlinks_list = list()
+
+    # ref: https://realpython.com/beautiful-soup-web-scraper-python/
+        # URL = "https://realpython.github.io/fake-jobs/"
+        # page = requests.get(URL)
+        # soup = BeautifulSoup(page.content, "html.parser")
+
+    if (resp.status == 200):    # status code indicates you got the page
+
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')  # parse html content
+
+        # find all '<a>' tags (hyperlinks) with 'href' attribute
+        for hyperlink in soup.find_all('a', href=True):
+            
+            href_value = hyperlink.get('href')
+
+            """
+            https://pymotw.com/2/urlparse/
+
+            To simply strip the fragment identifier from a URL, as you might need to do to find a base page name from a URL, use urldefrag().
+
+            from urlparse import urldefrag
+            original = 'http://netloc/path;parameters?query=argument#fragment'
+            print original
+            url, fragment = urldefrag(original)
+            print url
+            print fragment
+            The return value is a tuple containing the base URL and the fragment.
+
+            $ python urlparse_urldefrag.py
+
+            http://netloc/path;parameters?query=argument#fragment
+            http://netloc/path;parameters?query=argument                    <-- NOTE: get this one??
+            fragment
+            """
+
+            defragmented_url = urllib.parse.urldefrag(href)[0]
+
+            """
+            https://pymotw.com/2/urlparse/
+
+            Joining
+
+            In addition to parsing URLs, urlparse includes urljoin() for constructing absolute URLs from relative fragments.
+
+            from urlparse import urljoin
+            print urljoin('http://www.example.com/path/file.html', 'anotherfile.html')
+            print urljoin('http://www.example.com/path/file.html', '../anotherfile.html')
+            In the example, the relative portion of the path ("../") is taken into account when the second URL is computed.
+
+            $ python urlparse_urljoin.py
+
+            http://www.example.com/path/anotherfile.html
+            http://www.example.com/anotherfile.html
+            """
+
+            url = urllib.parse.urljoin(resp.url, defragmented_url)  # construct absolute url (?)
+            
+            # NOTE: where to use resp.raw_response.url ??
+
+            if is_valid(url):    # check if url is valid to crawl
+                hyperlinks_list.append(url)
+
+    else:   # if resp.status is not 200
+        print(f"Error: {resp.error}")
+
+
+    return hyperlinks_list  # return list of valid links to crawl
+
+    # ^^^^
 
     return list()
 
