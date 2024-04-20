@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+import urllib.robotparser  # parse robots.txt file
 
 # new imports for attempt at extract_next_links implementation
 from bs4 import BeautifulSoup
@@ -129,6 +130,21 @@ def extract_next_links(url, resp):
             if is_valid(url):    # check if url is valid to crawl
                 hyperlinks_list.append(url)
 
+            elif resp.status in [301, 302]:
+                # indicates that the resource has been moved to a different URL.
+                redirect_url = resp.headers.get('Location')
+                hyperlinks_list.append(redirect_url)
+
+            elif resp.status in [403, 404] :
+                # cannot find request or forbidden
+                pass
+
+            elif resp.status == 500:
+                # internal server error, retry the url later ?  not sure on this one
+                hyperlinks_list.append(resp.url)
+    
+        
+
     else:   # if resp.status is not 200
         print(f"Error: {resp.error}")
 
@@ -147,6 +163,13 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        # check for calendar pattern in url
+        calendar_pattern = (
+        r"\b\d{4}/\d{1,2}/\d{1,2}\b"  # paths like /2024/04/18
+        + r"|\b(year|month|day)=\d+\b"   # strings like ?year=2024&month=04&day=18
+        )
+        #return re.match()
+        
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -156,7 +179,48 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            """Extra file types to ignore
+            r".*\.(css|js|bmp|gif|jpe?g|ico|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
+            + r"|flv|3gp|ts|webm"
+            + r"|aac|flac|m4a"
+            + r"|svg|webp|heic"
+            + r"|json|xml|odt|ods|odp"
+            + r"|xz|gzip|war|apk"
+            + r"|php|py|bat|sh"
+            + r"|ttf|woff|woff2|icon)$", parsed.path.lower())
+    """
 
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+
+"""
+
+
+# this will check if the robots.txt file allows crawling for any user agent
+def robots_check(url, user_agent = '*'):
+    # get robots.txt url
+    parsed_url = urllib.parse.urlparse(url)
+    robots_txt_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
+
+
+    rp = urllib.robotparser.RobotFileParser()
+    rp.set_url(url)
+    try:
+        rp.read()
+    except Exception as e:
+        print('robots.txt not found')
+        return False
+    if rp.can_fetch(user_agent, url_to_check):
+        return True
+    else:
+        return False
+
+"""
